@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anita Lois Blog</title>
+
+    <!-- 🔥 Load Firebase FIRST -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        body {
+            background-color: #111;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+        }
+        textarea, input {
+            width: 100%;
+            margin: 5px 0;
+            padding: 10px;
+            background: #222;
+            color: white;
+            border: 1px solid #ff00ff;
+        }
+        button {
+            padding: 10px;
+            background: #ff00ff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+        .post {
+            background: rgba(255, 0, 255, 0.2);
+            padding: 15px;
+            margin: 10px auto;
+            width: 80%;
+            border-radius: 10px;
+            box-shadow: 0 0 10px #ff00ff;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="neon-text">Anita Lois Blog</h1>
+    
+    <div class="container">
+        <h2>Create a New Blog Post</h2>
+        <input type="text" id="title" placeholder="Post Title">
+        <textarea id="content" placeholder="Post Content (HTML supported)"></textarea>
+        <button onclick="addPost()">Publish</button>
+    </div>
+
+    <h2>All Posts</h2>
+    <div id="blog-posts"></div>
+
+    <script>
+        // ✅ Wait for the page to load fully before using Firebase
+        window.onload = function () {
+            console.log("🔥 Page Loaded. Initializing Firebase...");
+
+            // 🔥 Correct Firebase Configuration
+            var firebaseConfig = {
+                apiKey: "AIzaSyDTA65ebJDapACqBIbI8JdevFlbidOJPYE",
+                authDomain: "anblogs.firebaseapp.com",
+                databaseURL: "https://anblogs-default-rtdb.firebaseio.com/",
+                projectId: "anblogs",
+                storageBucket: "anblogs.appspot.com",
+                messagingSenderId: "373925508528",
+                appId: "1:373925508528:web:c03fe3017825a7fffb9275"
+            };
+
+            // ✅ Initialize Firebase
+            firebase.initializeApp(firebaseConfig);
+            var database = firebase.database();
+            console.log("🔥 Firebase is now ready!");
+
+            function addPost() {
+                let title = document.getElementById("title").value;
+                let content = document.getElementById("content").value;
+
+                if (title && content) {
+                    let newPostRef = database.ref("blogs").push();
+                    newPostRef.set({
+                        title: title,
+                        content: content
+                    }).then(() => {
+                        alert("Post Added!");
+                        document.getElementById("title").value = "";
+                        document.getElementById("content").value = "";
+                        fetchBlogs();
+                    });
+                } else {
+                    alert("Title and Content cannot be empty!");
+                }
+            }
+
+            function fetchBlogs() {
+                database.ref("blogs").once("value", function(snapshot) {
+                    let blogSection = document.getElementById("blog-posts");
+                    blogSection.innerHTML = "";
+
+                    snapshot.forEach(function(childSnapshot) {
+                        let data = childSnapshot.val();
+                        let postDiv = document.createElement("div");
+                        postDiv.classList.add("post");
+                        postDiv.innerHTML = `<h2>${data.title}</h2><p>${data.content}</p>
+                                             <button onclick="deletePost('${childSnapshot.key}')">Delete</button>`;
+                        blogSection.appendChild(postDiv);
+                    });
+                });
+            }
+
+            function deletePost(postId) {
+                database.ref("blogs/" + postId).remove().then(() => {
+                    alert("Post Deleted!");
+                    fetchBlogs();
+                });
+            }
+
+            window.addPost = addPost;
+            window.fetchBlogs = fetchBlogs;
+            window.deletePost = deletePost;
+
+            // Load posts
+            fetchBlogs();
+        };
+    </script>
+</body>
+</html>
