@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anita Lois Blog</title>
+    <style>
+        body {
+            background-color: #111;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .header {
+            background: #ff00ff;
+            padding: 15px;
+            font-size: 20px;
+        }
+        .header a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+        }
+        .post {
+            background: rgba(255, 0, 255, 0.2);
+            padding: 15px;
+            margin: 10px auto;
+            width: 80%;
+            border-radius: 10px;
+            box-shadow: 0 0 10px #ff00ff;
+            text-align: left;
+        }
+        .fade {
+            background: linear-gradient(to bottom, transparent, #111);
+            height: 30px;
+            width: 100%;
+            position: absolute;
+            bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/Admin-page">Admin Page</a>
+    </div>
+
+    <h1 class="neon-text">Anita Lois Blog</h1>
+
+    <h2>All Posts</h2>
+    <div id="blog-posts"></div>
+
+    <script>
+        const FIREBASE_URL = "https://anblogs-default-rtdb.firebaseio.com/blogs.json";
+
+        function fetchBlogs() {
+            fetch(FIREBASE_URL)
+                .then(response => response.json())
+                .then(data => {
+                    let blogSection = document.getElementById("blog-posts");
+                    blogSection.innerHTML = "";
+
+                    for (let postId in data) {
+                        let post = data[postId];
+                        let preview = post.content.substring(0, 100) + "...";
+                        let postDiv = document.createElement("div");
+                        postDiv.classList.add("post");
+                        postDiv.innerHTML = `<h2>${post.title}</h2>
+                                             <p><small>${post.date}</small></p>
+                                             <p>${preview}</p>
+                                             <div class="fade"></div>
+                                             <button onclick="viewPost('${postId}')">Read More</button>`;
+                        blogSection.appendChild(postDiv);
+                    }
+                })
+                .catch(error => console.error("❌ Firebase Fetch Error:", error));
+        }
+
+        function viewPost(postId) {
+            window.location.href = "/post?id=" + postId;
+        }
+
+        fetchBlogs();
+    </script>
+</body>
+</html>
