@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Blog</title>
+    <style>
+        body {
+            background-color: #111;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+        }
+        textarea, input {
+            width: 100%;
+            margin: 5px 0;
+            padding: 10px;
+            background: #222;
+            color: white;
+            border: 1px solid #ff00ff;
+        }
+        button {
+            padding: 10px;
+            background: #ff00ff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+        .post {
+            background: rgba(255, 0, 255, 0.2);
+            padding: 15px;
+            margin: 10px auto;
+            width: 80%;
+            border-radius: 10px;
+            box-shadow: 0 0 10px #ff00ff;
+            text-align: left;
+        }
+        .delete-key-btn {
+            background: red;
+            color: white;
+            padding: 5px;
+            border: none;
+            cursor: pointer;
+            margin-left: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="neon-text">Admin Panel</h1>
+    
+    <div class="container">
+        <h2>Create a New Blog Post</h2>
+        <input type="text" id="title" placeholder="Post Title">
+        <textarea id="content" placeholder="Post Content (HTML supported)"></textarea>
+        <div>
+            <input type="password" id="adminKey" placeholder="Enter Admin Key">
+            <button class="delete-key-btn" onclick="removeAdminKey()">X</button>
+        </div>
+        <button onclick="addPost()">Publish</button>
+    </div>
+
+    <h2>All Posts</h2>
+    <div id="blog-posts"></div>
+
+    <script>
+        const FIREBASE_URL = "https://anblogs-default-rtdb.firebaseio.com/blogs.json";
+
+        function saveAdminKey() {
+            let adminKey = document.getElementById("adminKey").value;
+            if (adminKey) {
+                localStorage.setItem("adminKey", adminKey);
+                loadAdminKey();
+            }
+        }
+
+        function loadAdminKey() {
+            let savedKey = localStorage.getItem("adminKey");
+            let adminKeyInput = document.getElementById("adminKey");
+            let deleteKeyBtn = document.querySelector(".delete-key-btn");
+
+            if (savedKey) {
+                adminKeyInput.value = savedKey;
+                adminKeyInput.setAttribute("readonly", true);
+                deleteKeyBtn.style.display = "inline-block";
+            } else {
+                adminKeyInput.value = "";
+                adminKeyInput.removeAttribute("readonly");
+                deleteKeyBtn.style.display = "none";
+            }
+        }
+
+        function removeAdminKey() {
+            localStorage.removeItem("adminKey");
+            loadAdminKey();
+        }
+
+        function addPost() {
+            let title = document.getElementById("title").value;
+            let content = document.getElementById("content").value;
+            let adminKey = document.getElementById("adminKey").value;
+
+            if (title && content && adminKey) {
+                let postData = { title, content };
+
+                fetch(FIREBASE_URL + "?auth=" + adminKey, {
+                    method: "POST",
+                    body: JSON.stringify(postData),
+                    headers: { "Content-Type": "application/json" }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert("Post Added!");
+                    document.getElementById("title").value = "";
+                    document.getElementById("content").value = "";
+                    fetchBlogs();
+                })
+                .catch(error => alert("❌ Firebase Error: " + error.message));
+            } else {
+                alert("Title, Content, and Admin Key are required!");
+            }
+        }
+
+        function fetchBlogs() {
+            fetch(FIREBASE_URL)
+                .then(response => response.json())
+                .then(data => {
+                    let blogSection = document.getElementById("blog-posts");
+                    blogSection.innerHTML = "";
+
+                    for (let postId in data) {
+                        let post = data[postId];
+                        let postDiv = document.createElement("div");
+                        postDiv.classList.add("post");
+                        postDiv.innerHTML = `<h2>${post.title}</h2><p>${post.content}</p>
+                                             <input type="password" placeholder="Admin Key" id="key-${postId}">
+                                             <button onclick="deletePost('${postId}')">Delete</button>`;
+                        blogSection.appendChild(postDiv);
+                    }
+                })
+                .catch(error => console.error("❌ Firebase Fetch Error:", error));
+        }
+
+        function deletePost(postId) {
+            let adminKey = document.getElementById(`key-${postId}`).value;
+
+            if (!adminKey) {
+                alert("Admin Key is required!");
+                return;
+            }
+
+            fetch(`https://anblogs-default-rtdb.firebaseio.com/blogs/${postId}.json?auth=${adminKey}`, {
+                method: "DELETE"
+            })
+            .then(() => {
+                alert("Post Deleted!");
+                fetchBlogs();
+            })
+            .catch(error => alert("❌ Firebase Delete Error: " + error.message));
+        }
+
+        loadAdminKey();
+        fetchBlogs();
+    </script>
+</body>
+</html>
