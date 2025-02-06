@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Post</title>
+    <style>
+        body {
+            background-color: #111;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            position: relative;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+        }
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: #ff00ff;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <button class="close-btn" onclick="goBack()">X</button>
+
+    <div class="container">
+        <h1 id="post-title"></h1>
+        <p><small id="post-date"></small></p>
+        <div id="post-content"></div>
+    </div>
+
+    <script>
+        function goBack() {
+            window.location.href = "/Website"; 
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const postId = urlParams.get("id");
+        const FIREBASE_URL = `https://anblogs-default-rtdb.firebaseio.com/blogs/${postId}.json`;
+
+        fetch(FIREBASE_URL)
+            .then(response => response.json())
+            .then(post => {
+                document.getElementById("post-title").innerText = `${post.title}`;
+                document.getElementById("post-date").innerText = post.date;
+                document.getElementById("post-content").innerHTML = post.content;
+            })
+            .catch(error => console.error("❌ Firebase Fetch Error:", error));
+    </script>
+</body>
+</html>
